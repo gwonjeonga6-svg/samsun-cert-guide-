@@ -10,18 +10,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'anthropic/claude-sonnet-4-6',
         max_tokens: 400,
-        system: systemPrompt,
-        messages: messages.slice(-6),
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages.slice(-6),
+        ],
       }),
     });
 
@@ -31,11 +32,10 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ error: data.error?.message || '오류 발생' });
     }
 
-    const answer = data.content?.[0]?.text || '답변을 가져오지 못했습니다.';
+    const answer = data.choices?.[0]?.message?.content || '답변을 가져오지 못했습니다.';
     return res.status(200).json({ answer });
 
   } catch (error) {
-    console.error('API Error:', error);
     return res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 }
