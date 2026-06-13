@@ -18,7 +18,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'anthropic/claude-sonnet-4-6',
-        max_tokens: 400,
+        max_tokens: 1000,
         messages: [
           { role: 'system', content: systemPrompt },
           ...messages.slice(-6),
