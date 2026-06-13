@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from '../styles/Home.module.css'
 
+// 기준별 가이드북 페이지 번호
+const PAGE_REF = {
+  "1.1": 1, "1.2": 3, "1.3": 6, "1.4": 8, "1.5": 10,
+  "7.2": 55, "7.3": 55, "4.4": 39, "13.1": 97,
+  "10.7": 79, "11.6": 91, "8.8": 71,
+}
+
 const CERT = {
   "1.1": {
     t: "환자를 정확하게 확인한다.",
@@ -54,33 +61,39 @@ const CERT = {
   },
   "11.6": {
     t: "화재 안전 관리활동을 수행한다.",
-    g: "◯ 조사장소: 의료기관 전체\n◯ 조사대상: 전 직원\n\n★ RACE 원칙 ★\nR - Rescue (구조): 위험지역 환자 대피\nA - Alarm (경보): 화재경보 발령, 119 신고\nC - Confine (차단): 문 닫아 연기 차단\nE - Extinguish/Evacuate (소화/대피)\n\n[소화기 사용법 PASS]\nP - Pull (안전핀 뽑기)\nA - Aim (노즐을 불 쪽으로)\nS - Squeeze (손잡이 누르기)\nS - Sweep (좌우로 쓸듯이)\n\n[금연관리]\n• 병원 전체 금연구역\n• 원내 어디서도 흡연 금지\n• 꽁초 발견되면 안 됨",
+    g: "◯ 조사장소: 의료기관 전체\n◯ 조사대상: 전 직원\n\n★ RACE 원칙 ★\nR - Rescue (구조): 위험지역 환자 대피\nA - Alarm (경보): 화재경보 발령, 119 신고\nC - Confine (차단): 문 닫아 연기 차단\nE - Extinguish/Evacuate (소화/대피)\n\n[소화기 사용법 PASS]\nP - Pull (안전핀 뽑기)\nA - Aim (노즐을 불 쪽으로)\nS - Squeeze (손잡이 누르기)\nS - Sweep (좌우로 쓸듯이)\n\n[금연관리]\n• 병원 전체 금연구역\n• 원내 어디서도 흡연 금지",
     i: ["ME1[정규] 화재안전 관리 규정이 있다.", "ME2[정규] 화재 발생 시 대응절차를 알고 수행한다.", "ME3[정규] 소화기 사용법을 알고 수행한다.", "ME4[정규] 화재 예방활동을 수행한다.", "ME5[정규] 금연관리를 수행한다."]
   },
   "8.8": {
     t: "감염성질환자 및 면역저하 환자를 관리한다.",
-    g: "◯ 조사장소: 음압격리병실, 응급실, 외래\n◯ 조사대상: 의사, 간호사\n\n[전파경로별 격리 및 개인보호구]\n• 공기주의: 활동성 폐결핵·홍역·수두 등\n  → 음압격리실 + N95 마스크\n• 비말주의: 인플루엔자·코로나·백일해 등\n  → 1인실 또는 코호트격리 + 수술용 마스크\n• 접촉주의: MRSA·VRE·노로바이러스 등\n  → 1인실 또는 코호트격리 + 장갑·가운\n\n★ 격리 해제는 반드시 의사 지시 후 ★\n\n[면역저하 환자 보호격리]\n• 역격리(보호격리): 조혈모세포이식 등\n• 방문자 마스크 착용 필수",
+    g: "◯ 조사장소: 음압격리병실, 응급실, 외래\n◯ 조사대상: 의사, 간호사\n\n[전파경로별 격리 및 개인보호구]\n• 공기주의: 활동성 폐결핵·홍역·수두 등\n  → 음압격리실 + N95 마스크\n• 비말주의: 인플루엔자·코로나·백일해 등\n  → 1인실 또는 코호트격리 + 수술용 마스크\n• 접촉주의: MRSA·VRE·노로바이러스 등\n  → 1인실 또는 코호트격리 + 장갑·가운\n\n★ 격리 해제는 반드시 의사 지시 후 ★",
     i: ["ME1[정규] 격리 절차가 있다.", "ME2[정규] 전파경로별 격리를 수행한다.", "ME3[정규] 격리 시 개인보호구를 착용한다.", "ME4[정규] 면역저하 환자 보호격리를 수행한다."]
   }
 }
 
-// 가이드북 전직원 숙지 필수항목 기준
 const QUICK_BTNS = [
-  // 1장 환자안전보장활동 (전직원 필수)
   { label: '✅ 1.1 환자확인', q: '환자확인 두 가지 지표와 개방형 질문 방법' },
   { label: '📞 1.2 의사소통', q: '구두처방 절차와 PRN처방 관리 방법' },
   { label: '⚕️ 1.3 수술확인', q: '수술 전 Sign-In Time-Out Sign-Out 방법' },
   { label: '🏥 1.4 낙상예방', q: '낙상 위험평가와 고위험환자 관리 방법' },
   { label: '🧴 1.5 손위생', q: '손위생 5가지 시점과 수행 방법' },
-  // 7장 환자안전사고
+  { label: '⚠️ 7.2 위험관리', q: '위험관리체계와 위험등록부 관리 방법' },
   { label: '📝 7.3 사고보고', q: '환자안전사고 종류와 보고 절차' },
-  // 8장 감염관리
+  { label: '💊 4.4 고위험약품', q: '고위험 의약품 종류와 관리 원칙' },
   { label: '🦠 8.8 감염·격리', q: '전파경로별 격리 기준과 개인보호구 착용 방법' },
-  // 10장 직원안전
   { label: '🦺 10.7 직원안전', q: '직원 안전사고 보고 절차와 개인보호구 착용 기준' },
-  // 11장 화재안전
   { label: '🔥 11.6 화재안전', q: '화재 발생 시 RACE 원칙과 소화기 PASS 사용법' },
+  { label: '📊 13.1 안전지표', q: '환자안전 의무 관리 지표 6가지와 관리 방법' },
 ]
+
+function parseMarkdown(text) {
+  return text
+    .replace(/#{1,3}\s+(.+)/g, '$1')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/`(.+?)`/g, '$1')
+    .trim()
+}
 
 function findRelevant(query) {
   const q = query.toLowerCase()
@@ -94,8 +107,9 @@ function findRelevant(query) {
     '사고보고': ['7.3'], '안전사고': ['7.3'], 'rca': ['7.3'], '적신호': ['7.3'],
     '고위험약': ['4.4'], '의약품': ['4.4'], '인슐린': ['4.4'], '헤파린': ['4.4'],
     '지표': ['13.1'], '욕창': ['13.1'],
-    '직원안전': ['10.7'], '주사침': ['10.7'], '찔림': ['10.7'], '개인보호구': ['10.7'], '보호구': ['10.7'],
-    '화재': ['11.6'], 'race': ['11.6'], 'pass': ['11.6'], '소화기': ['11.6'], '대피': ['11.6'], '금연': ['11.6'],
+    '직원안전': ['10.7'], '주사침': ['10.7'], '찔림': ['10.7'], '개인보호구': ['10.7'],
+    '화재': ['11.6'], 'race': ['11.6'], 'pass': ['11.6'], '소화기': ['11.6'],
+    '감염': ['8.8'], '격리': ['8.8'], '결핵': ['8.8'], 'mrsa': ['8.8'],
   }
   const found = new Set()
   const numMatch = query.match(/\d+\.\d+(?:\.\d+)?/g)
@@ -144,34 +158,42 @@ export default function Home() {
 
     const keys = findRelevant(text)
     let ctx = ''
+    let pageRefs = []
     keys.forEach(k => {
       const d = CERT[k]
-      if (d) ctx += `\n\n=== 기준 ${k}: ${d.t} ===\n${d.g}\n조사항목: ${d.i.join(' | ')}\n`
+      if (d) {
+        ctx += `\n\n=== 기준 ${k}: ${d.t} ===\n${d.g}\n조사항목: ${d.i.join(' | ')}\n`
+        if (PAGE_REF[k]) pageRefs.push({ key: k, page: PAGE_REF[k], title: d.t })
+      }
     })
 
     const systemPrompt = `당신은 급성기병원 4주기 인증기준 현장가이드 어시스턴트입니다.
-바쁜 현장 직원이 스마트폰으로 빠르게 확인하는 용도입니다.
+현장 직원이 스마트폰과 PC에서 빠르게 확인하는 용도입니다.
 
 답변 규칙:
-- 3~5줄 이내로 핵심만
-- 번호나 불릿으로 간결하게
-- 기준번호 앞에 표시
+- 핵심 내용을 충실하게 빠짐없이 답변
+- 번호나 불릿(•)으로 간결하게 구조화
 - ★로 가장 중요한 것 강조
-- 구어체 사용 (딱딱하지 않게)${ctx ? '\n\n참조 기준:' + ctx : ''}`
+- 기준번호 앞에 표시
+- 구어체 사용 (딱딱하지 않게)
+- 마크다운 기호(##, **) 절대 사용 금지${ctx ? '\n\n참조 기준:' + ctx : ''}`
 
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: newMsgs.slice(-6),
-          systemPrompt,
-        }),
+        body: JSON.stringify({ messages: newMsgs.slice(-6), systemPrompt }),
       })
       const data = await res.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.answer || '오류가 발생했습니다.' }])
+      const rawAnswer = data.answer || '오류가 발생했습니다.'
+      const cleanAnswer = parseMarkdown(rawAnswer)
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: cleanAnswer,
+        pageRefs: pageRefs
+      }])
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: '네트워크 오류가 발생했습니다. 다시 시도해주세요.' }])
+      setMessages(prev => [...prev, { role: 'assistant', content: '네트워크 오류가 발생했습니다.' }])
     } finally {
       setLoading(false)
     }
@@ -184,36 +206,25 @@ export default function Home() {
       setTimeout(() => setVoiceStatus(''), 3000)
       return
     }
-    if (isListening) {
-      recognitionRef.current?.stop()
-      return
-    }
+    if (isListening) { recognitionRef.current?.stop(); return }
     const rec = new SR()
     rec.lang = 'ko-KR'
     rec.interimResults = true
     rec.continuous = false
     recognitionRef.current = rec
-
     rec.onstart = () => { setIsListening(true); setVoiceStatus('🎤 듣는 중... 말씀하세요') }
     rec.onresult = (e) => {
       const t = Array.from(e.results).map(r => r[0].transcript).join('')
       setInput(t)
-      if (e.results[e.results.length - 1].isFinal) {
-        setVoiceStatus('')
-        sendMessage(t)
-      }
+      if (e.results[e.results.length - 1].isFinal) { setVoiceStatus(''); sendMessage(t) }
     }
-    rec.onerror = (e) => {
-      setVoiceStatus('오류: ' + e.error)
-      setTimeout(() => setVoiceStatus(''), 3000)
-    }
+    rec.onerror = (e) => { setVoiceStatus('오류: ' + e.error); setTimeout(() => setVoiceStatus(''), 3000) }
     rec.onend = () => { setIsListening(false); setVoiceStatus('') }
     rec.start()
   }
 
   return (
     <div className={styles.app}>
-      {/* 헤더 */}
       <div className={styles.header}>
         <div className={styles.headerIcon}>📋</div>
         <div className={styles.headerInfo}>
@@ -223,18 +234,13 @@ export default function Home() {
         <div className={styles.badge}>4주기</div>
       </div>
 
-      {/* 빠른 버튼 */}
       <div className={styles.quickWrap}>
         {QUICK_BTNS.map((b, i) => (
-          <button key={i} className={styles.qb} onClick={() => sendMessage(b.q)}>
-            {b.label}
-          </button>
+          <button key={i} className={styles.qb} onClick={() => sendMessage(b.q)}>{b.label}</button>
         ))}
       </div>
 
-      {/* 메시지 영역 */}
       <div className={styles.msgs} ref={msgsRef}>
-        {/* 웰컴 메시지 */}
         {messages.length === 0 && (
           <div className={`${styles.msg} ${styles.bot}`}>
             <div className={`${styles.av} ${styles.botAv}`}>AI</div>
@@ -242,15 +248,8 @@ export default function Home() {
               <strong>인증기준 현장가이드입니다 👋</strong>
               <p>궁금한 상황을 자연어로 물어보세요.</p>
               <div className={styles.egList}>
-                {[
-                  '"낙상 고위험 표식 어디 붙여?"',
-                  '"구두처방 언제 할 수 있어?"',
-                  '"기준 1.4 설명해줘"',
-                ].map((eg, i) => (
-                  <div key={i} className={styles.eg}
-                    onClick={() => sendMessage(eg.replace(/"/g, ''))}>
-                    💬 {eg}
-                  </div>
+                {['"낙상 고위험 표식 어디 붙여?"', '"구두처방 언제 할 수 있어?"', '"기준 1.4 설명해줘"'].map((eg, i) => (
+                  <div key={i} className={styles.eg} onClick={() => sendMessage(eg.replace(/"/g, ''))}>💬 {eg}</div>
                 ))}
               </div>
               <p className={styles.voiceHint}>🎤 마이크 버튼으로 음성 질문 가능 (크롬)</p>
@@ -263,48 +262,35 @@ export default function Home() {
             <div className={`${styles.av} ${m.role === 'user' ? styles.userAv : styles.botAv}`}>
               {m.role === 'user' ? '나' : 'AI'}
             </div>
-            <div className={styles.bub}>{m.content}</div>
+            <div className={styles.bubWrap}>
+              <div className={styles.bub}>{m.content}</div>
+              {m.pageRefs && m.pageRefs.length > 0 && (
+                <div className={styles.pageRefs}>
+                  {m.pageRefs.map((ref, j) => (
+                    <a key={j} href={`/guide.pdf#page=${ref.page}`} target="_blank" rel="noopener noreferrer" className={styles.pageRef}>
+                      📄 가이드북 {ref.page}p ({ref.key})
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         ))}
 
         {loading && (
           <div className={`${styles.msg} ${styles.bot}`}>
             <div className={`${styles.av} ${styles.botAv}`}>AI</div>
-            <div className={styles.bub}>
-              <span className={styles.dots}>
-                <span>●</span><span>●</span><span>●</span>
-              </span>
-            </div>
+            <div className={styles.bub}><span className={styles.dots}><span>●</span><span>●</span><span>●</span></span></div>
           </div>
         )}
       </div>
 
-      {/* 입력 영역 */}
       <div className={styles.bottom}>
         {voiceStatus && <div className={styles.voiceBar}>{voiceStatus}</div>}
         <div className={styles.inputRow}>
-          <button
-            className={`${styles.micBtn} ${isListening ? styles.micOn : ''}`}
-            onClick={toggleVoice}
-            aria-label="음성입력"
-          >
-            🎤
-          </button>
-          <input
-            className={styles.textInput}
-            type="text"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && sendMessage(input)}
-            placeholder="상황이나 키워드로 물어보세요..."
-          />
-          <button
-            className={styles.sendBtn}
-            onClick={() => sendMessage(input)}
-            aria-label="전송"
-          >
-            ↑
-          </button>
+          <button className={`${styles.micBtn} ${isListening ? styles.micOn : ''}`} onClick={toggleVoice} aria-label="음성입력">🎤</button>
+          <input className={styles.textInput} type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage(input)} placeholder="상황이나 키워드로 물어보세요..." />
+          <button className={styles.sendBtn} onClick={() => sendMessage(input)} aria-label="전송">↑</button>
         </div>
       </div>
     </div>
