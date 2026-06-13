@@ -17,7 +17,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
       },
       body: JSON.stringify({
-       model: 'meta-llama/llama-3.3-8b-instruct:free',
+      model: 'google/gemini-flash-1.5:free',
         max_tokens: 1000,
         messages: [
           { role: 'system', content: systemPrompt },
